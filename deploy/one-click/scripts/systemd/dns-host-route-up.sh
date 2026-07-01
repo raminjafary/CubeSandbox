@@ -162,7 +162,10 @@ configure_with_resolved() {
   resolvectl revert "${RESOLVED_LINK_NAME}" >/dev/null 2>&1 || true
   resolvectl dns "${RESOLVED_LINK_NAME}" "${COREDNS_BIND_ADDR}" >/dev/null
   resolvectl domain "${RESOLVED_LINK_NAME}" '~cube.app' >/dev/null
-  resolvectl default-route "${RESOLVED_LINK_NAME}" no >/dev/null
+  # default-route needs systemd v240+; tolerate its absence on older releases.
+  if ! resolvectl default-route "${RESOLVED_LINK_NAME}" no >/dev/null 2>&1; then
+    log "resolvectl default-route unsupported on this systemd version; skipping (cube.app DNS routing still applies via the ~cube.app domain)"
+  fi
   printf 'systemd-resolved\n' > "${DNS_MODE_FILE}"
   printf '%s\n' "${RESOLVED_LINK_NAME}" > "${DNS_IFACE_FILE}"
 }
